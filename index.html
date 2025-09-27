@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <title>متجر هاي تك</title>
+  <link rel="stylesheet" href="style.css">
+
+  <!-- Firebase -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-storage-compat.js"></script>
+</head>
+<body>
+  <header>
+    <h1>هاي تك - المتجر</h1>
+  </header>
+
+  <main>
+    <section id="categories">
+      <h2>الفئات</h2>
+      <div id="categoryList"></div>
+    </section>
+
+    <section id="products">
+      <h2>المنتجات</h2>
+      <div id="productList"></div>
+    </section>
+
+    <section id="orderForm" style="display:none;">
+      <h2>إتمام الطلب</h2>
+      <form id="checkoutForm">
+        <input type="text" id="name" placeholder="الاسم" required>
+        <input type="tel" id="phone" placeholder="رقم الهاتف" required>
+        <input type="text" id="address" placeholder="العنوان" required>
+        <select id="paymentMethod" required>
+          <option value="">اختر طريقة الدفع</option>
+          <option value="COD">الدفع عند الاستلام</option>
+          <option value="Instapay">إنستا باي</option>
+          <option value="Vodafone">فودافون كاش</option>
+        </select>
+        <div id="transferDetails" style="display:none;">
+          <p>قم بالتحويل على الرقم: <strong>01025380065</strong></p>
+          <input type="file" id="paymentProof">
+        </div>
+        <button type="submit">تأكيد الطلب</button>
+      </form>
+    </section>
+  </main>
+
+  <footer>
+    <p>مصنع هاي تك - هاتف: 01013055600 - 
+      <a href="https://wa.me/201013055600">واتساب</a>
+    </p>
+    <p>متخصصون في إنتاج الورق الحراري واستيكرات الباركود</p>
+  </footer>
+
+  <script src="app.js"></script>
+  <script>
+    initFirebase();
+    loadCategories();
+    loadProducts();
+
+    document.getElementById('paymentMethod').addEventListener('change', e=>{
+      document.getElementById('transferDetails').style.display =
+        (e.target.value === 'Instapay' || e.target.value === 'Vodafone') ? 'block' : 'none';
+    });
+
+    document.getElementById('checkoutForm').addEventListener('submit', async e=>{
+      e.preventDefault();
+      const order = {
+        name: document.getElementById('name').value,
+        phone: document.getElementById('phone').value,
+        address: document.getElementById('address').value,
+        paymentMethod: document.getElementById('paymentMethod').value,
+        items: cart,
+        total: cart.reduce((s,i)=>s+i.price*i.qty,0)
+      };
+      const file=document.getElementById('paymentProof').files[0];
+      await createOrder(order,file);
+      alert("تم إرسال طلبك بنجاح");
+      cart=[];
+      document.getElementById('orderForm').style.display='none';
+    });
+  </script>
+</body>
+</html>
