@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <title>لوحة تحكم هاي تك</title>
+  <link rel="stylesheet" href="style.css">
+
+  <!-- Firebase -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-storage-compat.js"></script>
+</head>
+<body>
+  <h1>لوحة الإدارة</h1>
+
+  <section id="login">
+    <input type="email" id="adminEmail" placeholder="البريد">
+    <input type="password" id="adminPass" placeholder="كلمة المرور">
+    <button id="loginBtn">دخول</button>
+  </section>
+
+  <section id="dashboard" style="display:none;">
+    <h2>الطلبات</h2>
+    <div id="orders"></div>
+
+    <h2>إدارة الفئات</h2>
+    <form id="addCategoryForm">
+      <input type="text" id="cName" placeholder="اسم الفئة" required>
+      <button type="submit">إضافة فئة</button>
+    </form>
+    <div id="categoryAdminList"></div>
+
+    <h2>إدارة المنتجات</h2>
+    <form id="addProductForm">
+      <input type="text" id="pName" placeholder="اسم المنتج" required>
+      <input type="number" id="pPrice" placeholder="السعر" required>
+      <select id="pCategory"></select>
+      <input type="file" id="pImage" required>
+      <button type="submit">إضافة منتج</button>
+    </form>
+    <div id="productAdminList"></div>
+  </section>
+
+  <script src="app.js"></script>
+  <script>
+    initFirebase();
+
+    document.getElementById('loginBtn').onclick=async ()=>{
+      try{
+        await adminLogin(
+          document.getElementById('adminEmail').value,
+          document.getElementById('adminPass').value
+        );
+        document.getElementById('login').style.display='none';
+        document.getElementById('dashboard').style.display='block';
+
+        listenForOrders(showOrders);
+        loadCategoriesAdmin();
+        loadProductsAdmin();
+      }catch(err){ alert('خطأ: '+err.message); }
+    };
+
+    document.getElementById('addCategoryForm').onsubmit=async e=>{
+      e.preventDefault();
+      const name=document.getElementById('cName').value;
+      await adminAddCategory(name);
+      alert("تمت إضافة الفئة");
+      loadCategoriesAdmin();
+    };
+
+    document.getElementById('addProductForm').onsubmit=async e=>{
+      e.preventDefault();
+      const name=document.getElementById('pName').value;
+      const price=+document.getElementById('pPrice').value;
+      const category=document.getElementById('pCategory').value;
+      const file=document.getElementById('pImage').files[0];
+      await adminAddProduct({name_ar:name,price,category_id:category},[file]);
+      alert("تمت إضافة المنتج");
+      loadProductsAdmin();
+    };
+
+    function showOrders(orders){
+      const c=document.getElementById('orders'); c.innerHTML='';
+      orders.forEach(o=>{
+        const d=document.createElement('div'); d.className='order';
+        d.innerHTML=`
+          <p><b>الاسم:</b> ${o.customer.name}</p>
+          <p><b>الهاتف:</b> ${o.customer.phone}</p>
+          <p><b>العنوان:</b> ${o.customer.address}</p>
+          <p><b>الطريقة:</b> ${o.payment_method}</p>
+          <p><b>الإجمالي:</b> ${o.total_amount} ج.م</p>
+          ${o.payment_proof?`<a href="${o.payment_proof.url}" target="_blank">صورة الدفع</a>`:''}
+        `;
+        c.appendChild(d);
+      });
+    }
+  </script>
+</body>
+</html>
